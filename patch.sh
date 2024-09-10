@@ -1,22 +1,18 @@
 #!/bin/bash
 set -e
 
-VERSION=$1
-
-if [ -z "$VERSION" ]; then
-  echo "VERSION is not set"
-  exit 1
-fi
-
-branch=v$VERSION
-
-echo "$branch"
-
 cd remote
+
 git add .
 git reset --hard
-git checkout "$branch"
-git pull origin "$branch"
+
+git checkout main
+git pull origin main --tags
+
+VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+
+git checkout "$VERSION"
+git pull origin "$VERSION"
 
 SHA1=$(git rev-parse --short=8 --verify HEAD)
 
