@@ -20,7 +20,7 @@ GO_LDFLAGS="-X github.com/elastic/cloud-on-k8s/v2/pkg/about.version=$VERSION \
   -X github.com/elastic/cloud-on-k8s/v2/pkg/about.buildHash=$SHA1 \
   -X github.com/elastic/cloud-on-k8s/v2/pkg/about.buildDate=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
   -X github.com/elastic/cloud-on-k8s/v2/pkg/about.buildSnapshot=false"
-OPERATOR_IMAGE=ghcr.io/trancong12102/eck-operator:$VERSION
+OPERATOR_IMAGE=ghcr.io/elastic-ee/eck-operator:$VERSION
 
 docker buildx build . \
 	 	-f build/Dockerfile \
