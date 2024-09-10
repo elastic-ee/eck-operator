@@ -3,15 +3,15 @@ set -e
 
 cd remote
 
-git add .
-git reset --hard
-
-git checkout main
-git pull origin main --tags
+# Get latest release tag
+VERSION=$(curl -s "https://api.github.com/repos/elastic/cloud-on-k8s/releases/latest" | jq -r .tag_name)
+if [ -z "$VERSION" ]; then
+  echo "Failed to get latest release tag"
+  exit 1
+fi
 
 REGISTRY=ghcr.io
 REPO=elastic-ee/eck-operator
-VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
 OPERATOR_IMAGE=$REGISTRY/$REPO:$VERSION
 
 # Check if the version is already built
@@ -21,6 +21,8 @@ if curl -f -s -H "Authorization: Bearer $TOKEN" https://ghcr.io/v2/$REPO/manifes
   exit 0
 fi
 
+git add .
+git reset --hard
 git checkout "$VERSION"
 git pull origin "$VERSION"
 git apply ../license.patch
