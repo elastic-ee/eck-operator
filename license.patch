@@ -1,0 +1,111 @@
+diff --git a/build/Dockerfile b/build/Dockerfile
+index 341fe7788..6831a03be 100644
+--- a/build/Dockerfile
++++ b/build/Dockerfile
+@@ -39,7 +39,7 @@ LABEL io.k8s.description="Elastic Cloud on Kubernetes automates the deployment,
+       org.opencontainers.image.description="Elastic Cloud on Kubernetes automates the deployment, provisioning, management, and orchestration of Elasticsearch, Kibana, APM Server, Beats, and Enterprise Search on Kubernetes" \
+       org.opencontainers.image.documentation="https://www.elastic.co/guide/en/cloud-on-k8s/" \
+       org.opencontainers.image.licenses="Elastic-License-2.0" \
+-      org.opencontainers.image.source="https://github.com/elastic/cloud-on-k8s/" \
++      org.opencontainers.image.source="https://github.com/trancong12102/eck-operator/" \
+       org.opencontainers.image.title="Elastic Cloud on Kubernetes" \
+       org.opencontainers.image.vendor="Elastic" \
+       org.opencontainers.image.version="$VERSION" \
+diff --git a/pkg/controller/common/license/check.go b/pkg/controller/common/license/check.go
+index 1d9daa9e6..6596e8c9e 100644
+--- a/pkg/controller/common/license/check.go
++++ b/pkg/controller/common/license/check.go
+@@ -6,16 +6,13 @@ package license
+ 
+ import (
+ 	"context"
+-	"fmt"
+ 	"sort"
+-	"time"
+ 
+ 	"github.com/pkg/errors"
+ 	corev1 "k8s.io/api/core/v1"
+ 	"k8s.io/apimachinery/pkg/types"
+ 
+ 	"github.com/elastic/cloud-on-k8s/v2/pkg/utils/k8s"
+-	ulog "github.com/elastic/cloud-on-k8s/v2/pkg/utils/log"
+ )
+ 
+ const (
+@@ -91,46 +88,17 @@ func (lc *checker) CurrentEnterpriseLicense(ctx context.Context) (*EnterpriseLic
+ 
+ // EnterpriseFeaturesEnabled returns true if a valid enterprise license is installed.
+ func (lc *checker) EnterpriseFeaturesEnabled(ctx context.Context) (bool, error) {
+-	license, err := lc.CurrentEnterpriseLicense(ctx)
+-	if err != nil {
+-		return false, err
+-	}
+-	return license != nil, nil
++	return true, nil
+ }
+ 
+ // Valid returns true if the given Enterprise license is valid or an error if any.
+ func (lc *checker) Valid(ctx context.Context, l EnterpriseLicense) (bool, error) {
+-	pk, err := lc.publicKeyFor(l)
+-	if err != nil {
+-		return false, errors.Wrap(err, "while loading signature secret")
+-	}
+-	if len(pk) == 0 {
+-		ulog.FromContext(ctx).Info("This is an unlicensed development build of ECK. License management and Enterprise features are disabled")
+-		return false, nil
+-	}
+-	verifier, err := NewVerifier(pk)
+-	if err != nil {
+-		return false, err
+-	}
+-	status := verifier.Valid(ctx, l, time.Now())
+-	if status == LicenseStatusValid {
+-		return true, nil
+-	}
+-	return false, nil
++	return true, nil
+ }
+ 
+ // ValidOperatorLicenseKeyType returns true if the current operator license key is valid
+ func (lc checker) ValidOperatorLicenseKeyType(ctx context.Context) (OperatorLicenseType, error) {
+-	lic, err := lc.CurrentEnterpriseLicense(ctx)
+-	if err != nil {
+-		ulog.FromContext(ctx).V(-1).Info("Invalid Enterprise license, fallback to Basic: " + err.Error())
+-	}
+-
+-	licType := lic.GetOperatorLicenseType()
+-	if _, valid := OperatorLicenseTypeOrder[licType]; !valid {
+-		return licType, fmt.Errorf("invalid license key: %s", licType)
+-	}
+-	return licType, nil
++	return LicenseTypeEnterprise, nil
+ }
+ 
+ type MockLicenseChecker struct {
+diff --git a/pkg/controller/common/license/verifier.go b/pkg/controller/common/license/verifier.go
+index 5bd6595cf..b6bdab6f4 100644
+--- a/pkg/controller/common/license/verifier.go
++++ b/pkg/controller/common/license/verifier.go
+@@ -20,8 +20,6 @@ import (
+ 	"time"
+ 
+ 	errors2 "github.com/pkg/errors"
+-
+-	ulog "github.com/elastic/cloud-on-k8s/v2/pkg/utils/log"
+ )
+ 
+ // Verifier verifies Enterprise licenses.
+@@ -31,13 +29,6 @@ type Verifier struct {
+ 
+ // Valid checks the validity of the given Enterprise license.
+ func (v *Verifier) Valid(ctx context.Context, l EnterpriseLicense, now time.Time) LicenseStatus {
+-	if !l.IsValid(now) {
+-		return LicenseStatusExpired
+-	}
+-	if err := v.ValidSignature(l); err != nil {
+-		ulog.FromContext(ctx).Error(err, "Failed signature check")
+-		return LicenseStatusInvalid
+-	}
+ 	return LicenseStatusValid
+ }
+ 
