@@ -23,6 +23,7 @@ fi
 
 git add .
 git reset --hard
+git fetch origin --tags
 git checkout "$VERSION"
 git pull origin "$VERSION"
 git apply ../license.patch
