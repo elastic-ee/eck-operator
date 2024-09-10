@@ -13,6 +13,7 @@ fi
 REGISTRY=ghcr.io
 REPO=elastic-ee/eck-operator
 OPERATOR_IMAGE=$REGISTRY/$REPO:$VERSION
+LATEST_IMAGE=$REGISTRY/$REPO:latest
 
 # Check if the version is already built
 TOKEN=$(curl -s https://ghcr.io/token\?scope\="repository:$REPO:pull" | jq -r .token)
@@ -40,7 +41,11 @@ docker buildx build . \
   --build-arg GO_TAGS='' \
   --build-arg VERSION="$VERSION" \
   --push \
+  --cache-from type=registry,ref=$LATEST_IMAGE \
   -t $OPERATOR_IMAGE
+
+docker tag $OPERATOR_IMAGE $LATEST_IMAGE
+docker push $LATEST_IMAGE
 
 git add .
 git reset --hard
