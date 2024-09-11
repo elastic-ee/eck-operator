@@ -27,7 +27,15 @@ git reset --hard
 git fetch origin --tags
 git checkout "$VERSION"
 git pull origin "$VERSION"
-git apply ../license.patch
+
+# check.go file path
+FILE="./pkg/controller/common/license/check.go"
+
+# Remove the body of the method and keep only `return true, nil`
+perl -0777 -pi -e 's/(func.*Valid.*\(bool, error\)) ({\n(.*\n)*?})/\1 { return true, nil }/' $FILE
+
+# Remove "time" import
+perl -0777 -pi -e 's/.*"time"\n//g' $FILE
 
 SHA1=$(git rev-parse --short=8 --verify HEAD)
 GO_LDFLAGS="-X github.com/elastic/cloud-on-k8s/v2/pkg/about.version=$VERSION \
