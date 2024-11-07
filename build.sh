@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-cd remote
-
 # Get latest release tag
 VERSION=$(curl -s "https://api.github.com/repos/elastic/cloud-on-k8s/releases/latest" | jq -r .tag_name)
 if [ -z "$VERSION" ]; then
@@ -22,11 +20,11 @@ if curl -f -s -H "Authorization: Bearer $TOKEN" https://ghcr.io/v2/$REPO/manifes
   exit 0
 fi
 
-git add .
-git reset --hard
-git fetch origin --tags
-git checkout "$VERSION"
-git pull origin "$VERSION"
+# Download the latest release source code and extract it
+rm -rf release
+mkdir -p release
+curl -sL "https://github.com/elastic/cloud-on-k8s/archive/refs/tags/$VERSION.tar.gz" | tar -xz --strip-components=1 -C release
+cd release
 
 # check.go file path
 FILE="./pkg/controller/common/license/check.go"

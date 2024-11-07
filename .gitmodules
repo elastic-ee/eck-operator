@@ -1,3 +1,0 @@
-[submodule "remote"]
-	path = remote
-	url = https://github.com/elastic/cloud-on-k8s.git
