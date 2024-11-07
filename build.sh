@@ -35,9 +35,10 @@ perl -0777 -pi -e 's/(func.*Valid.*\(bool, error\)) ({\n(.*\n)*?})/\1 { return t
 # Remove "time" import
 perl -0777 -pi -e 's/.*"time"\n//g' $FILE
 
-SHA1=$(git rev-parse --short=8 --verify HEAD)
+# Get the latest commit hash from the GitHub release
+BUILD_HASH=$(curl -s "https://api.github.com/repos/elastic/cloud-on-k8s/commits?sha=$VERSION" | jq -r '.[0].sha' | cut -c1-8)
 GO_LDFLAGS="-X github.com/elastic/cloud-on-k8s/v2/pkg/about.version=$VERSION \
-  -X github.com/elastic/cloud-on-k8s/v2/pkg/about.buildHash=$SHA1 \
+  -X github.com/elastic/cloud-on-k8s/v2/pkg/about.buildHash=$BUILD_HASH \
   -X github.com/elastic/cloud-on-k8s/v2/pkg/about.buildDate=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
   -X github.com/elastic/cloud-on-k8s/v2/pkg/about.buildSnapshot=false"
 
@@ -52,6 +53,3 @@ docker buildx build . \
 
 docker tag $OPERATOR_IMAGE $LATEST_IMAGE
 docker push $LATEST_IMAGE
-
-git add .
-git reset --hard
