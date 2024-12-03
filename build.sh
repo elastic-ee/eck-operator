@@ -42,6 +42,10 @@ GO_LDFLAGS="-X github.com/elastic/cloud-on-k8s/v2/pkg/about.version=$VERSION \
   -X github.com/elastic/cloud-on-k8s/v2/pkg/about.buildDate=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
   -X github.com/elastic/cloud-on-k8s/v2/pkg/about.buildSnapshot=false"
 
+# change private image to public image
+sed -i 's|FROM docker.elastic.co/wolfi/go:\([^@]*\)@sha256:[^ ]* as builder|FROM golang:\1 as builder|g' build/Dockerfile
+sed -i 's|FROM docker.elastic.co/wolfi/static:latest@sha256:[^ ]*|FROM ghcr.io/wolfi-dev/static:alpine|g' build/Dockerfile
+
 docker buildx build . \
   -f build/Dockerfile \
   --build-arg GO_LDFLAGS="$GO_LDFLAGS" \
